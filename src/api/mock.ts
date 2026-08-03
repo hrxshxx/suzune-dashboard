@@ -8,9 +8,11 @@
  * rollback path is reachable.
  */
 import { presetThresholds, ACTIONS, tierForScore } from '../lib/antinuke';
+import { FEATURE_SCHEMAS, defaultsFor } from '../lib/featureSchemas';
 import type {
   AntinukeConfig, Channel, DiscordUser, Finding, GuildSummary, Overview,
   Role, ScanResult, SecurityEvent, WhitelistCandidate, WhitelistEntry,
+  FeatureConfig, FeatureResponse,
 } from './types';
 import { ApiError } from './types';
 
@@ -75,6 +77,7 @@ function defaultConfig(guildId: string): AntinukeConfig {
 const store = {
   configs: new Map<string, AntinukeConfig>(),
   whitelist: new Map<string, WhitelistEntry[]>(),
+  features: new Map<string, FeatureConfig>(),
 };
 
 function getConfig(guildId: string): AntinukeConfig {
@@ -308,6 +311,22 @@ export const mockApi = {
   testAlert: () => delay(undefined, 500),
   getChannels: (_guildId: string) => delay(clone(CHANNELS)),
   getRoles: (_guildId: string) => delay(clone(ROLES)),
+
+  getFeature: (guildId: string, feature: string): Promise<FeatureResponse> => {
+    const schema = FEATURE_SCHEMAS[feature];
+    if (!schema) throw new ApiError('Unknown feature', 404);
+    const key = `${guildId}:${feature}`;
+    if (!store.features.has(key)) store.features.set(key, defaultsFor(schema));
+    return delay({ schema, config: clone(store.features.get(key)!) });
+  },
+  patchFeature: (guildId: string, feature: string, patch: FeatureConfig): Promise<FeatureResponse> => {
+    const schema = FEATURE_SCHEMAS[feature];
+    if (!schema) throw new ApiError('Unknown feature', 404);
+    const key = `${guildId}:${feature}`;
+    const next = { ...(store.features.get(key) ?? defaultsFor(schema)), ...patch };
+    store.features.set(key, next);
+    return delay({ schema, config: clone(next) });
+  },
 };
 
 export type MockApi = typeof mockApi;

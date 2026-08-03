@@ -5,7 +5,10 @@ import { OverviewPage } from './routes/OverviewPage';
 import { AntiNukePage } from './routes/AntiNukePage';
 import { ServerPickerPage } from './routes/ServerPickerPage';
 import { ComingSoonPage } from './routes/ComingSoonPage';
+import { FeaturePage } from './routes/FeaturePage';
 import { LandingPage } from './routes/LandingPage';
+import { DocsPage } from './routes/DocsPage';
+import { FUNCTIONAL_FEATURES } from './lib/featureSchemas';
 import { useAuth } from './hooks/useAuth';
 import { Card } from './components/ui/Card';
 import { Button } from './components/ui/Button';
@@ -67,6 +70,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/docs" element={<DocsPage />} />
 
       <Route
         path="/servers"
@@ -80,6 +84,17 @@ export default function App() {
         path="/servers/:guildId/anti-nuke"
         element={<RequireAuth><GuildLayout><AntiNukePage /></GuildLayout></RequireAuth>}
       />
+
+      {/* Schema-driven feature pages, one route per functional feature. */}
+      {FUNCTIONAL_FEATURES.map((feature) => (
+        <Route
+          key={feature}
+          path={`/servers/:guildId/${feature}`}
+          element={<RequireAuth><GuildLayout><FeaturePage feature={feature} /></GuildLayout></RequireAuth>}
+        />
+      ))}
+
+      {/* Anything else (e.g. invites, which has no config) stays informational. */}
       <Route
         path="/servers/:guildId/*"
         element={<RequireAuth><GuildLayout><ComingSoonPage /></GuildLayout></RequireAuth>}

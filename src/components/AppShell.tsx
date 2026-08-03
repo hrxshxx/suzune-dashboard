@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import {
-  Activity, AlertOctagon, Hammer, Link2, List, Menu, Moon, ShieldCheck, Sparkles,
+  Activity, AlertOctagon, ArrowLeft, Hammer, Link2, List, Menu, Moon, ShieldCheck, Sparkles,
   Sun, Ticket, TrendingUp, UserPlus, X, LogOut,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
@@ -10,26 +10,32 @@ import { Logo } from './Logo';
 import { Button } from './ui/Button';
 import { useAntinuke, useGuilds } from '../hooks/useGuildQueries';
 import { useAuth, signOut } from '../hooks/useAuth';
+import { FUNCTIONAL_FEATURES } from '../lib/featureSchemas';
 
 interface NavItem {
   to: string;
   label: string;
   icon: ReactNode;
-  /** Built pages are live; the rest are visible-but-disabled per the brief. */
+  /** Feature key; when it is in FUNCTIONAL_FEATURES the page is live. */
+  key?: string;
+  /** Forces the disabled state regardless of key (e.g. invites has no config). */
   soon?: boolean;
 }
+
+const isSoon = (item: NavItem) =>
+  item.soon === true || (item.key !== undefined && !FUNCTIONAL_FEATURES.includes(item.key));
 
 function navItems(guildId: string): NavItem[] {
   const base = `/servers/${guildId}`;
   return [
     { to: base, label: 'Overview', icon: <Activity aria-hidden className="size-[18px]" /> },
     { to: `${base}/anti-nuke`, label: 'Anti-Nuke', icon: <ShieldCheck aria-hidden className="size-[18px]" /> },
-    { to: `${base}/moderation`, label: 'Moderation', icon: <Hammer aria-hidden className="size-[18px]" />, soon: true },
-    { to: `${base}/automod`, label: 'Automod', icon: <Sparkles aria-hidden className="size-[18px]" />, soon: true },
-    { to: `${base}/logging`, label: 'Logging', icon: <List aria-hidden className="size-[18px]" />, soon: true },
-    { to: `${base}/tickets`, label: 'Tickets', icon: <Ticket aria-hidden className="size-[18px]" />, soon: true },
-    { to: `${base}/leveling`, label: 'Leveling', icon: <TrendingUp aria-hidden className="size-[18px]" />, soon: true },
-    { to: `${base}/welcome`, label: 'Welcome', icon: <UserPlus aria-hidden className="size-[18px]" />, soon: true },
+    { to: `${base}/moderation`, label: 'Moderation', icon: <Hammer aria-hidden className="size-[18px]" />, key: 'moderation' },
+    { to: `${base}/automod`, label: 'Automod', icon: <Sparkles aria-hidden className="size-[18px]" />, key: 'automod' },
+    { to: `${base}/logging`, label: 'Logging', icon: <List aria-hidden className="size-[18px]" />, key: 'logging' },
+    { to: `${base}/tickets`, label: 'Tickets', icon: <Ticket aria-hidden className="size-[18px]" />, key: 'tickets' },
+    { to: `${base}/leveling`, label: 'Leveling', icon: <TrendingUp aria-hidden className="size-[18px]" />, key: 'leveling' },
+    { to: `${base}/welcome`, label: 'Welcome', icon: <UserPlus aria-hidden className="size-[18px]" />, key: 'welcome' },
     { to: `${base}/invites`, label: 'Invites', icon: <Link2 aria-hidden className="size-[18px]" />, soon: true },
   ];
 }
@@ -141,7 +147,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav aria-label="Sections" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
             {items.map((item) =>
-              item.soon ? (
+              isSoon(item) ? (
                 <span
                   key={item.label}
                   aria-disabled="true"
@@ -185,8 +191,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Menu aria-hidden className="size-[18px]" />
             </Button>
 
+            {/* Explicit back to the server list. */}
+            <NavLink to="/servers" aria-label="Back to servers">
+              <Button variant="secondary" className="gap-2">
+                <ArrowLeft aria-hidden className="size-4" />
+                <span className="hidden sm:inline">Servers</span>
+              </Button>
+            </NavLink>
+
             <NavLink
               to="/servers"
+              title={guild?.name ?? undefined}
               className="flex min-h-11 items-center gap-2.5 rounded-ctrl border border-border-strong bg-surface px-3 text-sm font-semibold hover:bg-hover"
             >
               <span
@@ -195,7 +210,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 {(guild?.name ?? 'S').slice(0, 1)}
               </span>
-              <span className="max-w-[8rem] truncate sm:max-w-[14rem]">
+              <span className="max-w-[7rem] truncate sm:max-w-[12rem]">
                 {guild?.name ?? 'Select server'}
               </span>
             </NavLink>

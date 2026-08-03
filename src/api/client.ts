@@ -25,6 +25,7 @@ import { ApiError } from './types';
 import type {
   AntinukeConfig, Channel, DiscordUser, GuildSummary, Overview,
   Role, ScanResult, SecurityEvent, WhitelistCandidate, WhitelistEntry,
+  FeatureResponse, FeatureConfig,
 } from './types';
 
 export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
@@ -108,6 +109,14 @@ const real = {
 
   getChannels: (guildId: string) => request<Channel[]>(`/api/guilds/${guildId}/channels`),
   getRoles: (guildId: string) => request<Role[]>(`/api/guilds/${guildId}/roles`),
+
+  getFeature: (guildId: string, feature: string) =>
+    request<FeatureResponse>(`/api/guilds/${guildId}/features/${feature}`),
+  patchFeature: (guildId: string, feature: string, patch: FeatureConfig) =>
+    request<FeatureResponse>(`/api/guilds/${guildId}/features/${feature}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    }),
 };
 
 export const api = USE_MOCKS ? mockApi : real;
@@ -124,4 +133,5 @@ export const qk = {
   candidates: (id: string) => ['candidates', id] as const,
   channels: (id: string) => ['channels', id] as const,
   roles: (id: string) => ['roles', id] as const,
+  feature: (id: string, feature: string) => ['feature', id, feature] as const,
 };

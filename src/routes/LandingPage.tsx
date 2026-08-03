@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useTheme } from '../lib/theme';
 import { useAuth, signIn } from '../hooks/useAuth';
+import { SUPPORT_INVITE, STUDIO, DEVELOPER } from '../lib/brand';
 import { Moon, Sun } from 'lucide-react';
 
 const FEATURES = [
@@ -113,14 +114,9 @@ export function LandingPage() {
                   Sign in with Discord
                 </Button>
               )}
-              <a
-                href="https://github.com/hrxshxx/Suzune"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex"
-              >
+              <Link to="/docs" className="inline-flex">
                 <Button variant="secondary" size="lg">Read the docs</Button>
-              </a>
+              </Link>
             </div>
 
             <p className="mt-4 flex items-center gap-1.5 text-xs text-muted">
@@ -234,11 +230,32 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center gap-3 border-t border-border px-5 py-6">
-        <span className="text-sm font-bold">Suzune</span>
-        <span className="text-xs text-muted">Security for Discord communities</span>
-        <span className="flex-1" />
-        <span className="text-xs text-muted">© {new Date().getFullYear()}</span>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2.5">
+            <Logo size={28} />
+            <div>
+              <p className="text-sm font-bold">Suzune</p>
+              <p className="text-xs text-muted">Security for Discord communities</p>
+            </div>
+          </div>
+          <div className="flex-1" />
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <Link to="/docs" className="text-muted hover:text-text">Docs</Link>
+            <a href={SUPPORT_INVITE} target="_blank" rel="noreferrer noopener" className="text-muted hover:text-text">
+              Support server
+            </a>
+            <a href="https://github.com/HrxshxYT/Suzune" target="_blank" rel="noreferrer noopener" className="text-muted hover:text-text">
+              GitHub
+            </a>
+          </nav>
+        </div>
+        <div className="border-t border-border">
+          <div className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center gap-x-2 gap-y-1 px-5 py-4 text-xs text-muted">
+            <span>© {new Date().getFullYear()} {STUDIO}.</span>
+            <span>Developed by {DEVELOPER}.</span>
+          </div>
+        </div>
       </footer>
     </div>
   );

@@ -193,3 +193,44 @@ export class ApiError extends Error {
     this.retryable = retryable;
   }
 }
+
+// ─── generic feature config ─────────────────────────────────────────────
+
+export type FieldType =
+  | 'toggle' | 'number' | 'text' | 'textarea'
+  | 'select' | 'channel' | 'role' | 'channels' | 'roles';
+
+export interface FeatureField {
+  key: string;
+  type: FieldType;
+  label: string;
+  description?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  maxLength?: number;
+  options?: { value: string; label: string }[];
+  default?: unknown;
+}
+
+export interface FeatureSection {
+  title: string;
+  description?: string;
+  fields: FeatureField[];
+}
+
+export interface FeatureSchema {
+  feature: string;
+  title: string;
+  icon: string;
+  description: string;
+  sections: FeatureSection[];
+}
+
+export type FeatureConfig = Record<string, unknown>;
+
+export interface FeatureResponse {
+  schema: FeatureSchema;
+  config: FeatureConfig;
+}
