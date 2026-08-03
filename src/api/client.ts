@@ -62,6 +62,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
+
+  // A proxy or misconfigured host can answer 200 with an HTML error page.
+  // Parsing that raises "Unexpected token '<'", which tells the user nothing.
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new ApiError(
+      'The server returned an unexpected response. Check that the API is reachable at this address.',
+      res.status,
+      true,
+    );
+  }
   return (await res.json()) as T;
 }
 

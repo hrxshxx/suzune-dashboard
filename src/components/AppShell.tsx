@@ -2,13 +2,14 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import {
   Activity, AlertOctagon, Hammer, Link2, List, Menu, Moon, ShieldCheck, Sparkles,
-  Sun, Ticket, TrendingUp, UserPlus, X,
+  Sun, Ticket, TrendingUp, UserPlus, X, LogOut,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useTheme } from '../lib/theme';
 import { Logo } from './Logo';
 import { Button } from './ui/Button';
 import { useAntinuke, useGuilds } from '../hooks/useGuildQueries';
+import { useAuth, signOut } from '../hooks/useAuth';
 
 interface NavItem {
   to: string;
@@ -61,6 +62,27 @@ function PanicBanner({ guildId }: { guildId: string }) {
       <a href={`/servers/${guildId}/anti-nuke#panic`} className="shrink-0 rounded-pill border border-white/60 bg-white/15 px-3 py-1 text-xs">
         Review
       </a>
+    </div>
+  );
+}
+
+function UserMenu() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden max-w-[10rem] truncate text-sm font-semibold sm:inline">
+        {user.username}
+      </span>
+      <Button
+        variant="secondary"
+        onClick={signOut}
+        aria-label="Sign out"
+        title="Sign out"
+        className="size-11 p-0"
+      >
+        <LogOut aria-hidden className="size-[18px]" />
+      </Button>
     </div>
   );
 }
@@ -179,6 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
 
             <div className="flex-1" />
+            <UserMenu />
             <ThemeToggle />
           </header>
 
