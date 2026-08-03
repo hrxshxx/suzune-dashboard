@@ -9,20 +9,21 @@
 export type Punishment = 'ban' | 'kick' | 'strip' | 'quarantine' | 'removeperms';
 
 /** Keys of the watched destructive actions, matching AntinukeConfig.thresholds. */
+/** Exactly the keys in the bot's WATCHED_ACTIONS — the bot is the source of truth. */
 export type ActionKey =
+  | 'ban'
+  | 'kick'
+  | 'prune'
   | 'channelCreate'
   | 'channelDelete'
+  | 'channelUpdate'
   | 'roleCreate'
   | 'roleDelete'
-  | 'dangerousPermGrant'
-  | 'massBan'
-  | 'massKick'
-  | 'memberPrune'
+  | 'roleUpdateDangerous'
   | 'webhookCreate'
   | 'webhookDelete'
   | 'botAdd'
   | 'guildUpdate'
-  | 'vanityUpdate'
   | 'emojiDelete'
   | 'stickerDelete';
 

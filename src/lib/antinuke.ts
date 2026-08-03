@@ -19,6 +19,21 @@ const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 export const ACTIONS: ActionMeta[] = [
   {
+    key: 'ban', label: 'Mass ban', group: 'members',
+    phrase: (n) => `bans ${n} ${plural(n, 'member', 'members')}`,
+    baseLimit: 5, baseWindow: 15,
+  },
+  {
+    key: 'kick', label: 'Mass kick', group: 'members',
+    phrase: (n) => `kicks ${n} ${plural(n, 'member', 'members')}`,
+    baseLimit: 5, baseWindow: 15,
+  },
+  {
+    key: 'prune', label: 'Member prune', group: 'members',
+    phrase: (n) => `prunes members ${n} ${plural(n, 'time', 'times')}`,
+    baseLimit: 1, baseWindow: 30,
+  },
+  {
     key: 'channelCreate', label: 'Channel create', group: 'structure',
     phrase: (n) => `creates ${n} ${plural(n, 'channel', 'channels')}`,
     baseLimit: 5, baseWindow: 20,
@@ -27,6 +42,11 @@ export const ACTIONS: ActionMeta[] = [
     key: 'channelDelete', label: 'Channel delete', group: 'structure',
     phrase: (n) => `deletes ${n} ${plural(n, 'channel', 'channels')}`,
     baseLimit: 3, baseWindow: 10,
+  },
+  {
+    key: 'channelUpdate', label: 'Channel update', group: 'structure',
+    phrase: (n) => `edits ${n} ${plural(n, 'channel', 'channels')}`,
+    baseLimit: 6, baseWindow: 20,
   },
   {
     key: 'roleCreate', label: 'Role create', group: 'structure',
@@ -39,24 +59,9 @@ export const ACTIONS: ActionMeta[] = [
     baseLimit: 3, baseWindow: 10,
   },
   {
-    key: 'dangerousPermGrant', label: 'Dangerous permission grant', group: 'structure',
+    key: 'roleUpdateDangerous', label: 'Role grants admin', group: 'structure',
     phrase: (n) => `grants dangerous permissions ${n} ${plural(n, 'time', 'times')}`,
     baseLimit: 2, baseWindow: 15,
-  },
-  {
-    key: 'massBan', label: 'Mass ban', group: 'members',
-    phrase: (n) => `bans ${n} ${plural(n, 'member', 'members')}`,
-    baseLimit: 5, baseWindow: 15,
-  },
-  {
-    key: 'massKick', label: 'Mass kick', group: 'members',
-    phrase: (n) => `kicks ${n} ${plural(n, 'member', 'members')}`,
-    baseLimit: 5, baseWindow: 15,
-  },
-  {
-    key: 'memberPrune', label: 'Member prune', group: 'members',
-    phrase: (n) => `prunes members ${n} ${plural(n, 'time', 'times')}`,
-    baseLimit: 1, baseWindow: 30,
   },
   {
     key: 'webhookCreate', label: 'Webhook create', group: 'integrations',
@@ -77,11 +82,6 @@ export const ACTIONS: ActionMeta[] = [
     key: 'guildUpdate', label: 'Server settings change', group: 'identity',
     phrase: (n) => `changes server settings ${n} ${plural(n, 'time', 'times')}`,
     baseLimit: 3, baseWindow: 30,
-  },
-  {
-    key: 'vanityUpdate', label: 'Vanity URL change', group: 'identity',
-    phrase: (n) => `changes the vanity URL ${n} ${plural(n, 'time', 'times')}`,
-    baseLimit: 1, baseWindow: 60,
   },
   {
     key: 'emojiDelete', label: 'Emoji delete', group: 'identity',
@@ -211,9 +211,10 @@ export function raidSentence(joinCount: number, windowSec: number, enabled: bool
 
 export const TIER_ORDER = ['AT RISK', 'ELEVATED', 'GUARDED', 'PROTECTED'] as const;
 
+/** Thresholds copied from the bot's integrityTier() — must not drift. */
 export function tierForScore(score: number): 'PROTECTED' | 'GUARDED' | 'ELEVATED' | 'AT RISK' {
-  if (score >= 85) return 'PROTECTED';
+  if (score >= 90) return 'PROTECTED';
   if (score >= 70) return 'GUARDED';
-  if (score >= 50) return 'ELEVATED';
+  if (score >= 40) return 'ELEVATED';
   return 'AT RISK';
 }
