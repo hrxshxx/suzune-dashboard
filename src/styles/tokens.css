@@ -1,0 +1,194 @@
+/* Suzune Dashboard — design tokens.
+ *
+ * Every colour, space, radius, shadow and duration lives here. Components
+ * consume these through Tailwind; no component may contain a hex value.
+ *
+ * Contrast: status and brand colours need different values for *fill* and for
+ * *text*. The vivid brand values fail WCAG AA badly as text — on light,
+ * warning (#F59E0B) is 2.04:1 and lilac (#C4B5FD) is 1.75:1. The `-text`
+ * variants below are solved to clear 4.5:1 against the worst-case surface in
+ * their theme (elevated), so they are safe on every background.
+ */
+
+:root,
+[data-theme='dark'] {
+  --bg: #0e0a14;
+  --surface: #17111f;
+  --elevated: #1f1729;
+  --border: #2e2440;
+  /* 3:1 against bg — for input outlines and other meaningful UI boundaries. */
+  --border-strong: #6a5394;
+  --text: #f2edf8;
+  --muted: #a79bb8;
+
+  --glass: rgba(31, 23, 41, 0.62);
+  --glass-border: rgba(196, 181, 253, 0.16);
+  --hover: rgba(255, 255, 255, 0.04);
+  --scrim: rgba(6, 3, 12, 0.6);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+  /* Text-safe accents — verified ≥4.5:1 on bg, surface and elevated. */
+  --primary-text: #9266f7;
+  --critical-text: #ef4444;
+  --warning-text: #f59e0b;
+  --success-text: #22c55e;
+  --info-text: #60a5fa;
+}
+
+[data-theme='light'] {
+  --bg: #faf8fd;
+  --surface: #ffffff;
+  --elevated: #f4f0fa;
+  --border: #e4dcef;
+  --border-strong: #a084c7;
+  --text: #1a1424;
+  --muted: #6b5f7d;
+
+  --glass: rgba(255, 255, 255, 0.66);
+  --glass-border: rgba(109, 40, 217, 0.14);
+  --hover: rgba(109, 40, 217, 0.05);
+  --scrim: rgba(30, 20, 45, 0.45);
+
+  --shadow-card: 0 1px 2px rgba(80, 50, 120, 0.08);
+  --shadow-modal: 0 24px 60px rgba(80, 40, 120, 0.22);
+
+  --primary-text: #7d49f5;
+  --critical-text: #db1313;
+  --warning-text: #986206;
+  --success-text: #167f3d;
+  --info-text: #0769e2;
+}
+
+:root {
+  /* Fills, icons and borders — identical in both themes. Never use these for
+   * body text; use the --*-text variants above. */
+  --primary: #8b5cf6;
+  --lilac: #c4b5fd;
+  --deep: #6d28d9;
+  --critical: #ef4444;
+  --warning: #f59e0b;
+  --success: #22c55e;
+  --info: #60a5fa;
+
+  /* 4px spacing grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-ctrl: 8px;
+  --radius-card: 12px;
+  --radius-modal: 16px;
+  --radius-pill: 9999px;
+
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Never remove the focus ring — replace it with a visible one. */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes su-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes su-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes su-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes su-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* No decorative motion on a security console. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
