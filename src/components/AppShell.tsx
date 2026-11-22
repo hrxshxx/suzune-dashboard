@@ -1,19 +1,21 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { Link, NavLink, useLocation, useParams } from 'react-router-dom';
 import {
-  Activity, AlertOctagon, ArrowLeft, Hammer, Link2, List, Menu, Moon, ShieldCheck, Sparkles,
-  Sun, Ticket, TrendingUp, UserPlus, X, LogOut,
+  AlertOctagon, ChevronsUpDown, FileText, Gavel, LayoutDashboard, LayoutGrid, Link2, LogOut, Menu,
+  Moon, ScanText, ShieldCheck, Sun, Ticket, TrendingUp, UserPlus, X,
 } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { useTheme } from '../lib/theme';
+import { acronym, tintFor } from '../lib/format';
 import { Logo } from './Logo';
-import { Button } from './ui/Button';
+import { Button, buttonClass } from './ui/Button';
 import { useAntinuke, useGuilds } from '../hooks/useGuildQueries';
 import { useAuth, signOut } from '../hooks/useAuth';
 import { FUNCTIONAL_FEATURES } from '../lib/featureSchemas';
+import type { GuildSummary } from '../api/types';
 
 interface NavItem {
-  to: string;
+  path: string;
   label: string;
   icon: ReactNode;
   /** Feature key; when it is in FUNCTIONAL_FEATURES the page is live. */
@@ -25,29 +27,49 @@ interface NavItem {
 const isSoon = (item: NavItem) =>
   item.soon === true || (item.key !== undefined && !FUNCTIONAL_FEATURES.includes(item.key));
 
-function navItems(guildId: string): NavItem[] {
-  const base = `/servers/${guildId}`;
-  return [
-    { to: base, label: 'Overview', icon: <Activity aria-hidden className="size-[18px]" /> },
-    { to: `${base}/anti-nuke`, label: 'Anti-Nuke', icon: <ShieldCheck aria-hidden className="size-[18px]" /> },
-    { to: `${base}/moderation`, label: 'Moderation', icon: <Hammer aria-hidden className="size-[18px]" />, key: 'moderation' },
-    { to: `${base}/automod`, label: 'Automod', icon: <Sparkles aria-hidden className="size-[18px]" />, key: 'automod' },
-    { to: `${base}/logging`, label: 'Logging', icon: <List aria-hidden className="size-[18px]" />, key: 'logging' },
-    { to: `${base}/tickets`, label: 'Tickets', icon: <Ticket aria-hidden className="size-[18px]" />, key: 'tickets' },
-    { to: `${base}/leveling`, label: 'Leveling', icon: <TrendingUp aria-hidden className="size-[18px]" />, key: 'leveling' },
-    { to: `${base}/welcome`, label: 'Welcome', icon: <UserPlus aria-hidden className="size-[18px]" />, key: 'welcome' },
-    { to: `${base}/invites`, label: 'Invites', icon: <Link2 aria-hidden className="size-[18px]" />, soon: true },
-  ];
+const ico = 'size-4 shrink-0';
+
+const NAV: { group: string; items: NavItem[] }[] = [
+  {
+    group: 'Security',
+    items: [
+      { path: '', label: 'Overview', icon: <LayoutDashboard aria-hidden className={ico} /> },
+      { path: 'anti-nuke', label: 'Anti-nuke', icon: <ShieldCheck aria-hidden className={ico} /> },
+      { path: 'automod', label: 'Automod', icon: <ScanText aria-hidden className={ico} />, key: 'automod' },
+    ],
+  },
+  {
+    group: 'Moderation',
+    items: [
+      { path: 'moderation', label: 'Moderation', icon: <Gavel aria-hidden className={ico} />, key: 'moderation' },
+      { path: 'logging', label: 'Logging', icon: <FileText aria-hidden className={ico} />, key: 'logging' },
+    ],
+  },
+  {
+    group: 'Community',
+    items: [
+      { path: 'welcome', label: 'Welcome & roles', icon: <UserPlus aria-hidden className={ico} />, key: 'welcome' },
+      { path: 'tickets', label: 'Tickets', icon: <Ticket aria-hidden className={ico} />, key: 'tickets' },
+      { path: 'leveling', label: 'Leveling', icon: <TrendingUp aria-hidden className={ico} />, key: 'leveling' },
+      { path: 'invites', label: 'Invite tracking', icon: <Link2 aria-hidden className={ico} />, soon: true },
+    ],
+  },
+];
+
+const ALL_ITEMS = NAV.flatMap((g) => g.items);
+
+/** The label of the page the URL points at, for the breadcrumb. */
+function pageLabel(pathname: string, guildId: string): string {
+  const rest = pathname.split(`/servers/${guildId}`)[1]?.replace(/^\//, '').split('/')[0] ?? '';
+  return ALL_ITEMS.find((i) => i.path === rest)?.label ?? 'Overview';
 }
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const next = theme === 'dark' ? 'light' : 'dark';
   return (
-    <Button variant="secondary" onClick={toggle} aria-label={`Switch to ${next} theme`} className="size-11 p-0">
-      {theme === 'dark'
-        ? <Sun aria-hidden className="size-[18px]" />
-        : <Moon aria-hidden className="size-[18px]" />}
+    <Button variant="ghost" onClick={toggle} aria-label={`Switch to ${next} theme`} className="w-8 px-0">
+      {theme === 'dark' ? <Sun aria-hidden className={ico} /> : <Moon aria-hidden className={ico} />}
     </Button>
   );
 }
@@ -59,35 +81,122 @@ function PanicBanner({ guildId }: { guildId: string }) {
   return (
     <div
       role="alert"
-      className="flex items-center gap-3 bg-critical px-5 py-3 text-sm font-semibold text-white"
+      className="flex items-center gap-3 bg-[color-mix(in_srgb,var(--critical)_12%,transparent)] px-6 py-2.5"
     >
-      <AlertOctagon aria-hidden className="size-5 shrink-0" />
+      <AlertOctagon aria-hidden className={cn(ico, 'text-critical-text')} />
       <span className="flex-1">
-        Panic mode is active — any single destructive action will trip Anti-Nuke and punish the executor immediately.
+        <strong className="font-semibold">Panic mode is on.</strong>{' '}
+        <span className="text-muted">
+          Any single destructive action trips Anti-Nuke and punishes the executor immediately.
+        </span>
       </span>
-      <a href={`/servers/${guildId}/anti-nuke#panic`} className="shrink-0 rounded-pill border border-white/60 bg-white/15 px-3 py-1 text-xs">
+      <Link to={`/servers/${guildId}/anti-nuke#panic`} className={buttonClass('secondary', 'sm')}>
         Review
-      </a>
+      </Link>
     </div>
   );
 }
 
-function UserMenu() {
-  const { user } = useAuth();
-  if (!user) return null;
+function Tile({ g, size }: { g: Pick<GuildSummary, 'id' | 'name'>; size: 22 | 28 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="hidden max-w-[10rem] truncate text-sm font-semibold sm:inline">
-        {user.username}
-      </span>
-      <Button
-        variant="secondary"
-        onClick={signOut}
-        aria-label="Sign out"
-        title="Sign out"
-        className="size-11 p-0"
+    <span
+      aria-hidden
+      style={{ background: tintFor(g.id), width: size, height: size }}
+      className={cn(
+        'inline-flex shrink-0 items-center justify-center border border-border text-xs font-semibold',
+        size === 28 ? 'rounded-[7px]' : 'rounded-[6px]',
+      )}
+    >
+      {size === 28 ? acronym(g.name) : g.name.slice(0, 1)}
+    </span>
+  );
+}
+
+function ServerSwitcher({ guildId }: { guildId: string }) {
+  const [open, setOpen] = useState(false);
+  const { data: guilds } = useGuilds();
+  const current = guilds?.find((g) => g.id === guildId);
+  const others = (guilds ?? []).filter((g) => g.canManage && g.botPresent);
+
+  useEffect(() => { setOpen(false); }, [guildId]);
+
+  return (
+    <div className="relative p-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex h-11 w-full items-center gap-2.5 rounded-ctrl border border-border-strong bg-surface px-2 text-left hover:bg-elevated-2"
       >
-        <LogOut aria-hidden className="size-[18px]" />
+        <Tile g={current ?? { id: guildId, name: '?' }} size={28} />
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="truncate font-medium">{current?.name ?? 'Loading…'}</span>
+          <span className="text-xs text-faint">
+            {current ? (current.botPresent ? 'Suzune added' : 'Suzune not added') : ' '}
+          </span>
+        </span>
+        <ChevronsUpDown aria-hidden className={cn(ico, 'text-faint')} />
+      </button>
+
+      {open && (
+        <>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Close server menu"
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-30 cursor-default"
+          />
+          <div
+            role="listbox"
+            aria-label="Switch server"
+            className="absolute inset-x-3 top-[60px] z-[31] animate-fade-in rounded-card border border-border-strong bg-elevated p-1 shadow-modal"
+          >
+            {others.map((g) => (
+              <Link
+                key={g.id}
+                to={`/servers/${g.id}`}
+                role="option"
+                aria-selected={g.id === guildId}
+                className={cn(
+                  'flex h-9 items-center gap-2.5 rounded-ctrl px-2.5 hover:bg-selected',
+                  g.id === guildId && 'bg-selected',
+                )}
+              >
+                <Tile g={g} size={22} />
+                <span className="min-w-0 flex-1 truncate">{g.name}</span>
+                {g.id === guildId && <span className="text-xs text-faint">Current</span>}
+              </Link>
+            ))}
+            <div className="-mx-1 mt-1 border-t border-border px-1 pt-1">
+              <Link to="/servers" className="flex h-9 items-center gap-2.5 rounded-ctrl px-2.5 text-muted hover:bg-selected">
+                <LayoutGrid aria-hidden className={ico} />
+                All servers
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function UserFooter() {
+  const { user } = useAuth();
+  return (
+    <div className="flex items-center gap-2 border-t border-border px-3 py-2.5">
+      {user?.avatarUrl ? (
+        <img src={user.avatarUrl} alt="" className="size-6 rounded-full" />
+      ) : (
+        <span aria-hidden className="inline-flex size-6 items-center justify-center rounded-full bg-elevated-2 text-xs font-semibold">
+          {(user?.username ?? '?').slice(0, 1).toUpperCase()}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate font-medium">{user?.username}</span>
+      <ThemeToggle />
+      <Button variant="ghost" onClick={signOut} aria-label="Log out" title="Log out" className="w-8 px-0">
+        <LogOut aria-hidden className={ico} />
       </Button>
     </div>
   );
@@ -95,132 +204,113 @@ function UserMenu() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { guildId = '' } = useParams();
+  const { pathname } = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const { data: guilds } = useGuilds();
   const guild = guilds?.find((g) => g.id === guildId);
-  const items = navItems(guildId);
+  const base = `/servers/${guildId}`;
 
   // Close the drawer on route change so it never covers the new page.
-  useEffect(() => { setNavOpen(false); }, [guildId]);
+  useEffect(() => { setNavOpen(false); }, [pathname]);
 
   return (
     <div className="min-h-screen">
-      <PanicBanner guildId={guildId} />
-
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-ctrl focus:bg-primary focus:px-4 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-ctrl focus:bg-primary focus:px-4 focus:py-2 focus:text-on-primary"
       >
         Skip to content
       </a>
 
       <div className="flex">
         {navOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-[color:var(--scrim)] lg:hidden animate-fade-in"
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Close navigation"
             onClick={() => setNavOpen(false)}
-            aria-hidden
+            className="fixed inset-0 z-[35] animate-fade-in bg-[color:var(--scrim)] lg:hidden"
           />
         )}
 
         <aside
+          aria-label="Server navigation"
           className={cn(
-            'fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r',
-            'border-[color:var(--glass-border)] bg-[color:var(--glass)] backdrop-blur-xl',
+            'fixed inset-y-0 left-0 z-40 flex w-[248px] shrink-0 flex-col border-r border-border bg-bg',
             'transition-transform duration-base ease-ease lg:sticky lg:top-0 lg:h-screen lg:translate-x-0',
-            navOpen ? 'translate-x-0' : '-translate-x-full',
+            navOpen ? 'translate-x-0 shadow-modal' : '-translate-x-full',
           )}
         >
-          <div className="flex items-center gap-3 p-5">
-            <Logo />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">Suzune</p>
-              <p className="text-xs text-muted">Security Console</p>
-            </div>
-            <Button
-              variant="ghost" size="sm" onClick={() => setNavOpen(false)}
-              aria-label="Close navigation" className="ml-auto lg:hidden"
-            >
-              <X aria-hidden className="size-4" />
+          <div className="flex h-12 items-center gap-2 border-b border-border px-4">
+            <Link to="/servers" aria-label="All servers"><Logo /></Link>
+            <span className="flex-1" />
+            <Button variant="ghost" onClick={() => setNavOpen(false)} aria-label="Close navigation" className="w-8 px-0 lg:hidden">
+              <X aria-hidden className={ico} />
             </Button>
           </div>
 
-          <nav aria-label="Sections" className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
-            {items.map((item) =>
-              isSoon(item) ? (
-                <span
-                  key={item.label}
-                  aria-disabled="true"
-                  title="Coming soon"
-                  className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-ctrl px-3 text-sm text-muted opacity-60"
-                >
-                  {item.icon}
-                  <span className="flex-1">{item.label}</span>
-                  <span className="rounded-pill bg-elevated px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                    Soon
-                  </span>
-                </span>
-              ) : (
-                <NavLink
-                  key={item.label}
-                  to={item.to}
-                  end={item.to.endsWith(guildId)}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex min-h-11 items-center gap-3 rounded-ctrl border px-3 text-sm transition-colors duration-fast',
-                      isActive
-                        ? 'border-primary/40 bg-primary/10 font-semibold text-primary-text'
-                        : 'border-transparent text-muted hover:bg-hover hover:text-text',
-                    )
-                  }
-                >
-                  {item.icon}
-                  <span className="flex-1">{item.label}</span>
-                </NavLink>
-              ),
-            )}
+          <ServerSwitcher guildId={guildId} />
+
+          <nav aria-label="Dashboard sections" className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-3 pb-3">
+            {NAV.map(({ group, items }) => (
+              <div key={group} className="flex flex-col gap-px">
+                <span className="flex h-6 items-center px-2 text-xs font-medium text-faint">{group}</span>
+                {items.map((item) =>
+                  isSoon(item) ? (
+                    <span
+                      key={item.label}
+                      aria-disabled="true"
+                      className="flex h-[30px] items-center gap-2.5 rounded-ctrl px-2 text-faint"
+                    >
+                      {item.icon}
+                      {item.label}
+                      <span className="ml-auto font-mono text-xs">soon</span>
+                    </span>
+                  ) : (
+                    <NavLink
+                      key={item.label}
+                      to={item.path ? `${base}/${item.path}` : base}
+                      end={!item.path}
+                      className={({ isActive }) =>
+                        cn(
+                          'group flex h-[30px] items-center gap-2.5 rounded-ctrl px-2 transition-colors duration-fast',
+                          isActive ? 'bg-selected text-text' : 'text-muted hover:bg-hover hover:text-text',
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <span className={cn('inline-flex', isActive && 'text-primary-text')}>{item.icon}</span>
+                          {item.label}
+                        </>
+                      )}
+                    </NavLink>
+                  ),
+                )}
+              </div>
+            ))}
           </nav>
+
+          <UserFooter />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-bg/85 px-4 py-3 backdrop-blur-md sm:px-7">
-            <Button
-              variant="secondary" onClick={() => setNavOpen(true)}
-              aria-label="Open navigation" className="size-11 p-0 lg:hidden"
-            >
-              <Menu aria-hidden className="size-[18px]" />
+          <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-bg pl-6 pr-4">
+            <Button variant="ghost" onClick={() => setNavOpen(true)} aria-label="Open navigation" className="-ml-2 w-8 px-0 lg:hidden">
+              <Menu aria-hidden className={ico} />
             </Button>
-
-            {/* Explicit back to the server list. */}
-            <NavLink to="/servers" aria-label="Back to servers">
-              <Button variant="secondary" className="gap-2">
-                <ArrowLeft aria-hidden className="size-4" />
-                <span className="hidden sm:inline">Servers</span>
-              </Button>
-            </NavLink>
-
-            <NavLink
-              to="/servers"
-              title={guild?.name ?? undefined}
-              className="flex min-h-11 items-center gap-2.5 rounded-ctrl border border-border-strong bg-surface px-3 text-sm font-semibold hover:bg-hover"
-            >
-              <span
-                aria-hidden
-                className="grid size-6 place-items-center rounded-md bg-gradient-to-br from-primary to-deep text-[11px] font-bold text-white"
-              >
-                {(guild?.name ?? 'S').slice(0, 1)}
+            <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-muted">
+              <Link to="/servers" className="truncate hover:text-text">{guild?.name ?? 'Servers'}</Link>
+              <span aria-hidden className="text-faint">/</span>
+              <span aria-current="page" className="whitespace-nowrap font-medium text-text">
+                {pageLabel(pathname, guildId)}
               </span>
-              <span className="max-w-[7rem] truncate sm:max-w-[12rem]">
-                {guild?.name ?? 'Select server'}
-              </span>
-            </NavLink>
-
-            <div className="flex-1" />
-            <UserMenu />
-            <ThemeToggle />
+            </nav>
           </header>
 
-          <main id="main" className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-6 sm:px-7 sm:py-8">
+          <PanicBanner guildId={guildId} />
+
+          <main id="main" className="flex w-full max-w-[1280px] flex-1 flex-col gap-4 px-6 pb-24 pt-6">
             {children}
           </main>
         </div>

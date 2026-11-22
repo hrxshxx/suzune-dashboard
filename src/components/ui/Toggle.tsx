@@ -27,16 +27,16 @@ export function Toggle({ checked, onChange, label, describedBy, disabled }: Togg
     >
       <span
         className={cn(
-          'block h-[26px] w-11 rounded-pill transition-colors duration-fast ease-ease',
-          checked ? 'bg-primary' : 'bg-border-strong',
+          'block h-[18px] w-[30px] rounded-pill border transition-colors duration-fast ease-ease',
+          checked ? 'border-transparent bg-primary' : 'border-border-strong bg-elevated-2',
         )}
       />
       <span
         aria-hidden
         className={cn(
-          'absolute left-0 top-1/2 size-5 -translate-y-1/2 rounded-pill bg-white',
+          'absolute left-[9px] top-1/2 size-3 -translate-y-1/2 rounded-pill',
           'transition-transform duration-fast ease-ease',
-          checked ? 'translate-x-[21px]' : 'translate-x-[3px]',
+          checked ? 'translate-x-[12px] bg-on-primary' : 'translate-x-0 bg-faint',
         )}
       />
     </button>

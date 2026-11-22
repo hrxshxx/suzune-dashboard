@@ -8,6 +8,11 @@ export default {
         bg: 'var(--bg)',
         surface: 'var(--surface)',
         elevated: 'var(--elevated)',
+        'elevated-2': 'var(--elevated-2)',
+        faint: 'var(--faint)',
+        selected: 'var(--selected)',
+        'on-primary': 'var(--on-primary)',
+        'on-critical': 'var(--on-critical)',
         border: 'var(--border)',
         'border-strong': 'var(--border-strong)',
         text: 'var(--text)',
@@ -45,10 +50,11 @@ export default {
         sans: 'var(--font-sans)',
         mono: 'var(--font-mono)',
       },
-      // Modular scale from the brief: 12/14/16/20/24/32/48.
+      // Dense console scale: 12/13/15/20/24/32/48.
       fontSize: {
         xs: ['12px', '16px'],
-        sm: ['14px', '20px'],
+        sm: ['13px', '19px'],
+        md: ['15px', '22px'],
         base: ['16px', '24px'],
         lg: ['20px', '28px'],
         xl: ['24px', '32px'],
@@ -62,6 +68,7 @@ export default {
         'slide-up': 'su-slide-up var(--dur-base) var(--ease)',
         'scale-in': 'su-scale-in var(--dur-base) var(--ease)',
         shimmer: 'su-shimmer 1.6s linear infinite',
+        pulse: 'su-pulse 1.4s ease-in-out infinite',
       },
     },
   },

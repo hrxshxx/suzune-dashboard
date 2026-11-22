@@ -30,3 +30,15 @@ export function initials(name: string): string {
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
+
+/** Up to three initials for a server tile, e.g. "Aurora SMP" → "AS". */
+export function acronym(name: string): string {
+  return name.split(/\s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 3) || '?';
+}
+
+/** A stable, muted tile colour per server, readable in both themes. */
+export function tintFor(id: string): string {
+  const hues = [28, 200, 150, 330, 260, 90, 12, 180];
+  const h = hues[Number(id.slice(-3)) % hues.length];
+  return `color-mix(in srgb, hsl(${h} 45% 50%) 16%, var(--elevated))`;
+}

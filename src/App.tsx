@@ -6,7 +6,7 @@ import { AntiNukePage } from './routes/AntiNukePage';
 import { ServerPickerPage } from './routes/ServerPickerPage';
 import { ComingSoonPage } from './routes/ComingSoonPage';
 import { FeaturePage } from './routes/FeaturePage';
-import { LandingPage } from './routes/LandingPage';
+import { LoginPage } from './routes/LoginPage';
 import { DocsPage } from './routes/DocsPage';
 import { FUNCTIONAL_FEATURES } from './lib/featureSchemas';
 import { useAuth } from './hooks/useAuth';
@@ -26,11 +26,11 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10">
-        <Skeleton className="h-8 w-48" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div aria-busy="true" className="mx-auto w-full max-w-[1240px] px-6 py-8">
+        <Skeleton className="h-6 w-40" />
+        <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-28 rounded-card" />
+            <Skeleton key={i} className="h-[122px] rounded-card" />
           ))}
         </div>
       </div>
@@ -45,7 +45,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
   if (error) {
     return (
       <div className="mx-auto w-full max-w-md px-5 py-16">
-        <Card tone="critical" className="p-5 text-center">
+        <Card className="p-6">
           <p className="font-semibold text-critical-text">Could not reach the dashboard</p>
           <p className="mt-1 text-sm text-muted">{error.message}</p>
           <Button variant="secondary" className="mt-4" onClick={() => void refetch()}>
@@ -69,7 +69,7 @@ function GuildLayout({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<LoginPage />} />
       <Route path="/docs" element={<DocsPage />} />
 
       <Route
