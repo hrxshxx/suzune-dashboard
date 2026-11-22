@@ -136,8 +136,8 @@ export function DocsPage() {
             </Button>
           </Link>
           <div className="flex flex-1 items-center gap-2.5">
-            <Logo size={28} />
-            <span className="text-sm font-bold">Suzune Docs</span>
+            <Logo />
+            <span className="text-sm text-muted">Docs</span>
           </div>
           <a href={SUPPORT_INVITE} target="_blank" rel="noreferrer noopener">
             <Button variant="secondary">Support server</Button>

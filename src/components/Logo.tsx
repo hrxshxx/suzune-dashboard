@@ -1,13 +1,9 @@
-import { ShieldCheck } from 'lucide-react';
-
-export function Logo({ size = 34 }: { size?: number }) {
+/** The Suzune wordmark: lower-case name with the 鈴 (bell) glyph. */
+export function Logo({ glyph = true }: { glyph?: boolean }) {
   return (
-    <span
-      aria-hidden
-      style={{ width: size, height: size }}
-      className="grid shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-lilac to-deep text-white"
-    >
-      <ShieldCheck style={{ width: size * 0.55, height: size * 0.55 }} />
+    <span className="inline-flex items-center gap-2">
+      <span className="text-md font-semibold tracking-[-0.04em]">suzune</span>
+      {glyph && <span aria-hidden className="text-sm text-faint">鈴</span>}
     </span>
   );
 }

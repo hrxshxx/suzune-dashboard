@@ -1,127 +1,115 @@
-import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertOctagon, AlertTriangle, ChevronDown, Info, ScanLine, ShieldCheck } from 'lucide-react';
-import { Card, CardHeader } from '../../components/ui/Card';
+import { AlertOctagon, AlertTriangle, Check, Info } from 'lucide-react';
 import { Badge, type BadgeTone } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { buttonClass } from '../../components/ui/Button';
 import { cn } from '../../lib/cn';
-import { relativeTime } from '../../lib/format';
-import type { Finding, Severity } from '../../api/types';
+import type { Finding, Severity, Tier } from '../../api/types';
 
-const SEVERITY: Record<Severity, { label: string; tone: BadgeTone; icon: ReactNode }> = {
-  critical: { label: 'Critical', tone: 'critical', icon: <AlertOctagon aria-hidden className="size-4" /> },
-  warning: { label: 'Warning', tone: 'warning', icon: <AlertTriangle aria-hidden className="size-4" /> },
-  info: { label: 'Info', tone: 'info', icon: <Info aria-hidden className="size-4" /> },
+const TIER_TONE: Record<Tier, BadgeTone> = {
+  PROTECTED: 'success', GUARDED: 'primary', ELEVATED: 'warning', 'AT RISK': 'critical',
 };
 
-export function FindingsSkeleton() {
+const BAR: Record<Tier, string> = {
+  PROTECTED: 'bg-success', GUARDED: 'bg-primary', ELEVATED: 'bg-warning', 'AT RISK': 'bg-critical',
+};
+
+const SEVERITY: Record<Severity, { label: string; icon: typeof Info; cls: string }> = {
+  critical: { label: 'critical', icon: AlertOctagon, cls: 'text-critical-text' },
+  warning: { label: 'warning', icon: AlertTriangle, cls: 'text-warning-text' },
+  info: { label: 'info', icon: Info, cls: 'text-info-text' },
+};
+const ORDER: Severity[] = ['critical', 'warning', 'info'];
+
+const rowCls = 'grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-3 border-t border-border px-4 py-3 sm:grid-cols-[16px_minmax(0,1fr)_64px_auto]';
+
+function Header({ count }: { count?: number }) {
   return (
-    <Card>
-      <CardHeader title="Scan findings" description="Checking this server…" />
-      <div className="space-y-3 p-5">
-        {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-      </div>
-    </Card>
-  );
-}
-
-function Group({ severity, findings, defaultOpen }: {
-  severity: Severity; findings: Finding[]; defaultOpen: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  const meta = SEVERITY[severity];
-
-  return (
-    <div className="border-b border-border last:border-b-0">
-      <h3>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex min-h-11 w-full items-center gap-2.5 px-5 py-3 text-left hover:bg-hover"
-        >
-          <span className={cn(
-            severity === 'critical' ? 'text-critical-text'
-              : severity === 'warning' ? 'text-warning-text' : 'text-info-text',
-          )}>
-            {meta.icon}
-          </span>
-          <span className="flex-1 text-sm font-semibold">{meta.label}</span>
-          <Badge tone={findings.length ? meta.tone : 'neutral'}>{findings.length}</Badge>
-          <ChevronDown
-            aria-hidden
-            className={cn('size-4 text-muted transition-transform duration-fast', open && 'rotate-180')}
-          />
-        </button>
-      </h3>
-
-      {open && (
-        <div className="space-y-2 px-5 pb-4">
-          {findings.length === 0 ? (
-            <p className="py-2 text-sm text-muted">Nothing found — this category is clear.</p>
-          ) : (
-            findings.map((f) => (
-              <div key={f.id} className="flex flex-wrap items-start gap-3 rounded-ctrl bg-elevated p-3.5">
-                <div className="min-w-[12rem] flex-1">
-                  <p className="text-sm font-semibold">{f.title}</p>
-                  <p className="mt-1 text-sm text-muted">{f.detail}</p>
-                </div>
-                {f.fixAction && (
-                  <Link
-                    to={f.fixAction.href}
-                    className={cn(
-                      'inline-flex h-9 shrink-0 items-center rounded-ctrl border px-3 text-xs font-semibold',
-                      'border-primary/40 bg-primary/10 text-primary-text hover:bg-primary/20',
-                    )}
-                  >
-                    {f.fixAction.label}
-                  </Link>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+    <div className="flex h-11 items-center gap-2 border-b border-border px-4">
+      <h2 id="posture-h" className="font-semibold">Security posture</h2>
+      <span className="flex-1" />
+      {count !== undefined && (
+        <span className="font-mono text-xs text-faint">{count === 0 ? 'no findings' : `${count} to fix`}</span>
       )}
     </div>
   );
 }
 
-export function FindingsList({ grade, scannedAt, findings }: {
-  grade: string; scannedAt: string; findings: Finding[];
-}) {
-  const bySeverity = (s: Severity) => findings.filter((f) => f.severity === s);
-  const criticals = bySeverity('critical');
-  const warnings = bySeverity('warning');
-  const infos = bySeverity('info');
-
+export function FindingsSkeleton() {
   return (
-    <Card>
-      <CardHeader
-        title={
-          <span className="flex items-center gap-2">
-            <ScanLine aria-hidden className="size-4 text-primary-text" />
-            Scan findings
-          </span>
-        }
-        description={`Each finding links to the control that resolves it · scanned ${relativeTime(scannedAt)}`}
-        action={<Badge tone={criticals.length ? 'critical' : 'success'}>Grade {grade}</Badge>}
-      />
-      {findings.length === 0 ? (
-        <div className="p-5">
-          <EmptyState
-            icon={<ShieldCheck className="size-7" />}
-            title="No findings"
-            description="This server passed every check in the last scan. Re-run a scan after any staff or permission change."
-          />
+    <section className="rounded-card border border-border bg-surface">
+      <Header />
+      <div className="flex items-center gap-4 p-4"><Skeleton className="h-7 w-16" /><Skeleton className="h-2 flex-1" /></div>
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className={rowCls}>
+          <Skeleton className="size-4 rounded-full" />
+          <div className="flex flex-col gap-1.5"><Skeleton className="h-3 w-1/2" /><Skeleton className="h-2.5 w-4/5" /></div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/** Integrity score, tier and the scan findings that hold it back. */
+export function FindingsList({ score, tier, verdict, findings }: {
+  score: number; tier: Tier; verdict: string; findings: Finding[];
+}) {
+  const sorted = [...findings].sort((a, b) => ORDER.indexOf(a.severity) - ORDER.indexOf(b.severity));
+  const filled = Math.round(score / 10);
+  return (
+    <section aria-labelledby="posture-h" className="rounded-card border border-border bg-surface">
+      <Header count={findings.length} />
+      <div className="flex flex-col gap-2 p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-xl font-semibold leading-none tracking-[-0.02em] tabular-nums">{score}</span>
+            <span className="font-mono text-xs text-faint">/100</span>
+          </div>
+          <Badge tone={TIER_TONE[tier]} dot>{tier.charAt(0) + tier.slice(1).toLowerCase()}</Badge>
+          <div role="img" aria-label={`Integrity ${score} out of 100`} className="flex h-1.5 flex-[1_1_240px] gap-0.5">
+            {Array.from({ length: 10 }, (_, i) => (
+              <span
+                key={i}
+                className={cn('flex-1 rounded-sm transition-colors duration-base', i < filled ? BAR[tier] : 'bg-elevated-2')}
+              />
+            ))}
+          </div>
+        </div>
+        <p className="text-muted">{verdict}</p>
+      </div>
+      {sorted.length === 0 ? (
+        <div className={rowCls}>
+          <Check aria-hidden className="mt-px size-4 text-success-text" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium">Every check passes</span>
+            <span className="text-muted">Re-scan after any staff or permission change.</span>
+          </div>
         </div>
       ) : (
-        <>
-          <Group severity="critical" findings={criticals} defaultOpen />
-          <Group severity="warning" findings={warnings} defaultOpen />
-          <Group severity="info" findings={infos} defaultOpen={false} />
-        </>
+        <ul className="m-0 list-none p-0">
+          {sorted.map((f) => {
+            const s = SEVERITY[f.severity];
+            const Icon = s.icon;
+            return (
+              <li key={f.id} className={rowCls}>
+                <Icon role="img" aria-label={s.label} className={cn('mt-px size-4', s.cls)} />
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-medium">{f.title}</span>
+                  <span className="text-muted">{f.detail}</span>
+                </div>
+                <span className="mt-px hidden text-right font-mono text-xs text-faint sm:block">{s.label}</span>
+                <div className="flex justify-end">
+                  {f.fixAction && (
+                    <Link to={f.fixAction.href} className={buttonClass('secondary', 'sm')} aria-label={`${f.fixAction.label}: ${f.title}`}>
+                      {f.fixAction.label}
+                    </Link>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </Card>
+    </section>
   );
 }

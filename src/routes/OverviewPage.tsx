@@ -1,31 +1,25 @@
-import { useParams } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Skeleton } from '../components/ui/Skeleton';
+import { Link, useParams } from 'react-router-dom';
+import { AlertCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button, buttonClass } from '../components/ui/Button';
 import { useEvents, useOverview, useScan } from '../hooks/useGuildQueries';
-import { IntegrityHero, IntegrityHeroSkeleton } from '../features/overview/IntegrityHero';
 import { ProtectionStrip } from '../features/overview/ProtectionStrip';
-import { MetricGrid, MetricGridSkeleton } from '../features/overview/MetricGrid';
+import { ServerFacts, StatsRow, StatsRowSkeleton } from '../features/overview/MetricGrid';
 import { FindingsList, FindingsSkeleton } from '../features/overview/FindingsList';
 import { EventsList, EventsSkeleton } from '../features/overview/EventsList';
-import { formatNumber } from '../lib/format';
+import { Skeleton } from '../components/ui/Skeleton';
+import { relativeTime } from '../lib/format';
 
 /** Errors state what failed, why, and the next step. */
-function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }) {
+function ErrorPanel({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
   return (
-    <Card tone="critical" className="p-5">
-      <div className="flex items-start gap-3">
-        <AlertTriangle aria-hidden className="mt-0.5 size-5 shrink-0 text-critical-text" />
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-critical-text">Could not load this section</p>
-          <p className="mt-1 text-sm text-muted">{message}</p>
-          <Button variant="secondary" size="sm" className="mt-3" onClick={onRetry}>
-            Try again
-          </Button>
-        </div>
+    <div role="alert" className="flex max-w-[560px] flex-col items-start gap-3 rounded-card border border-border bg-surface p-8">
+      <AlertCircle aria-hidden className="size-4 text-critical-text" />
+      <div className="flex flex-col gap-1">
+        <h2 className="text-md font-semibold">{title}</h2>
+        <p className="text-muted">{message} Protection in the server is unaffected; only the dashboard couldn't read it.</p>
       </div>
-    </Card>
+      <Button onClick={onRetry}><RefreshCw aria-hidden className="size-4" />Retry</Button>
+    </div>
   );
 }
 
@@ -34,90 +28,76 @@ export function OverviewPage() {
   const overview = useOverview(guildId);
   const scan = useScan(guildId);
   const events = useEvents(guildId);
+  const o = overview.data;
+
+  if (overview.isError) {
+    return (
+      <ErrorPanel
+        title="Couldn't load this server"
+        message={(overview.error as Error).message}
+        onRetry={() => void overview.refetch()}
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-xl font-bold tracking-tight">Server Overview</h1>
-        <p className="mt-1 text-sm text-muted">
-          {overview.data ? (
-            <>
-              Security posture for{' '}
-              <span className="font-semibold text-text">{overview.data.guild.name}</span> ·{' '}
-              <span className="font-mono tabular-nums">
-                {formatNumber(overview.data.guild.memberCount)} members
-              </span>
-            </>
-          ) : (
-            <Skeleton as="span" className="h-4 w-64 align-middle" />
-          )}
-        </p>
-      </header>
+    <>
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-[-0.02em]">Overview</h1>
+          <span className="font-mono text-xs text-faint">
+            {guildId}{scan.data && ` · scanned ${relativeTime(scan.data.scannedAt)}`}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => { void scan.refetch(); void overview.refetch(); }} loading={scan.isFetching}>
+            {!scan.isFetching && <RefreshCw aria-hidden className="size-4" />}Re-scan
+          </Button>
+          <Link to={`/servers/${guildId}/anti-nuke`} className={buttonClass('primary')}>Anti-nuke settings</Link>
+        </div>
+      </div>
 
       {/* A blocking issue outranks everything else on the page. */}
-      {overview.data?.blocking && (
-        <Card tone="critical" className="p-5" role="alert">
-          <div className="flex items-start gap-3">
-            <AlertTriangle aria-hidden className="mt-0.5 size-5 shrink-0 text-critical-text" />
-            <div>
-              <p className="font-semibold text-critical-text">{overview.data.blocking.title}</p>
-              <p className="mt-1 text-sm">{overview.data.blocking.detail}</p>
-              <p className="mt-2 text-sm font-semibold">Fix: {overview.data.blocking.fix}</p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {overview.isError ? (
-        <ErrorCard
-          message={(overview.error as Error).message}
-          onRetry={() => void overview.refetch()}
-        />
-      ) : (
-        <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-          {overview.isPending ? (
-            <>
-              <IntegrityHeroSkeleton />
-              <Card className="p-5"><Skeleton className="h-40 w-full" /></Card>
-            </>
-          ) : (
-            <>
-              <IntegrityHero
-                score={overview.data.integrityIndex}
-                tier={overview.data.tier}
-                verdict={overview.data.verdict}
-                history={overview.data.history}
-              />
-              <ProtectionStrip items={overview.data.protection} />
-            </>
-          )}
+      {o?.blocking && (
+        <div role="alert" className="flex animate-slide-up items-start gap-3 rounded-card bg-[color-mix(in_srgb,var(--critical)_12%,transparent)] px-4 py-2.5">
+          <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-critical-text" />
+          <span className="flex-1">
+            <strong className="font-semibold">{o.blocking.title}.</strong>{' '}
+            <span className="text-muted">{o.blocking.detail} {o.blocking.fix}</span>
+          </span>
         </div>
       )}
 
-      <section aria-labelledby="metrics-heading">
-        <h2 id="metrics-heading" className="mb-3 text-base font-bold">Server metrics</h2>
-        {overview.isPending ? <MetricGridSkeleton /> : overview.data ? (
-          <MetricGrid metrics={overview.data.metrics} />
-        ) : null}
-      </section>
+      {o ? <StatsRow metrics={o.metrics} /> : <StatsRowSkeleton />}
 
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        {scan.isPending ? <FindingsSkeleton /> : scan.isError ? (
-          <ErrorCard message={(scan.error as Error).message} onRetry={() => void scan.refetch()} />
-        ) : (
-          <FindingsList
-            grade={scan.data.grade}
-            scannedAt={scan.data.scannedAt}
-            findings={scan.data.findings}
-          />
-        )}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
+          {!o || scan.isPending ? <FindingsSkeleton /> : scan.isError ? (
+            <ErrorPanel title="Couldn't run the scan" message={(scan.error as Error).message} onRetry={() => void scan.refetch()} />
+          ) : (
+            <FindingsList score={o.integrityIndex} tier={o.tier} verdict={o.verdict} findings={scan.data.findings} />
+          )}
 
-        {events.isPending ? <EventsSkeleton /> : events.isError ? (
-          <ErrorCard message={(events.error as Error).message} onRetry={() => void events.refetch()} />
-        ) : (
-          <EventsList events={events.data} />
-        )}
+          {events.isPending ? <EventsSkeleton /> : events.isError ? (
+            <ErrorPanel title="Couldn't load incidents" message={(events.error as Error).message} onRetry={() => void events.refetch()} />
+          ) : (
+            <EventsList events={events.data} />
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          {o ? (
+            <>
+              <ProtectionStrip items={o.protection} />
+              <ServerFacts guildId={guildId} metrics={o.metrics} />
+            </>
+          ) : (
+            <div className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
+              {Array.from({ length: 7 }, (_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

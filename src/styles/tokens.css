@@ -3,74 +3,86 @@
  * Every colour, space, radius, shadow and duration lives here. Components
  * consume these through Tailwind; no component may contain a hex value.
  *
- * Contrast: status and brand colours need different values for *fill* and for
- * *text*. The vivid brand values fail WCAG AA badly as text — on light,
- * warning (#F59E0B) is 2.04:1 and lilac (#C4B5FD) is 1.75:1. The `-text`
- * variants below are solved to clear 4.5:1 against the worst-case surface in
- * their theme (elevated), so they are safe on every background.
+ * Palette: warm near-black / warm paper, one ice-blue accent. Status colours
+ * are used for both fill and text, so each `-text` value is the same hue
+ * checked at ≥4.5:1 against the elevated surface in its theme.
  */
 
 :root,
 [data-theme='dark'] {
-  --bg: #0e0a14;
-  --surface: #17111f;
-  --elevated: #1f1729;
-  --border: #2e2440;
-  /* 3:1 against bg — for input outlines and other meaningful UI boundaries. */
-  --border-strong: #6a5394;
-  --text: #f2edf8;
-  --muted: #a79bb8;
+  --bg: #0f0e0d;
+  --surface: #151413;
+  --elevated: #1b1a18;
+  --elevated-2: #232120;
+  --border: #2a2826;
+  --border-strong: #3a3734;
+  --text: #edeae5;
+  --muted: #a39d96;
+  --faint: #8a847d;
 
-  --glass: rgba(31, 23, 41, 0.62);
-  --glass-border: rgba(196, 181, 253, 0.16);
-  --hover: rgba(255, 255, 255, 0.04);
-  --scrim: rgba(6, 3, 12, 0.6);
+  --glass: rgba(27, 26, 24, 0.74);
+  --glass-border: #3a3734;
+  --hover: rgba(237, 234, 229, 0.045);
+  --selected: rgba(237, 234, 229, 0.075);
+  --scrim: rgba(8, 7, 6, 0.55);
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --shadow-card: none;
+  --shadow-modal: 0 1px 0 rgba(0, 0, 0, 0.4), 0 16px 40px -12px rgba(0, 0, 0, 0.7);
 
-  /* Text-safe accents — verified ≥4.5:1 on bg, surface and elevated. */
-  --primary-text: #9266f7;
-  --critical-text: #ef4444;
-  --warning-text: #f59e0b;
-  --success-text: #22c55e;
-  --info-text: #60a5fa;
+  --primary: #9ccbea;
+  --on-primary: #0f0e0d;
+  --critical: #ee6e5c;
+  --on-critical: #0f0e0d;
+  --warning: #e3a54b;
+  --success: #5cc08e;
+  --info: #9ccbea;
+
+  --primary-text: #9ccbea;
+  --critical-text: #ee6e5c;
+  --warning-text: #e3a54b;
+  --success-text: #5cc08e;
+  --info-text: #9ccbea;
 }
 
 [data-theme='light'] {
-  --bg: #faf8fd;
+  --bg: #f7f6f3;
   --surface: #ffffff;
-  --elevated: #f4f0fa;
-  --border: #e4dcef;
-  --border-strong: #a084c7;
-  --text: #1a1424;
-  --muted: #6b5f7d;
+  --elevated: #f4f2ef;
+  --elevated-2: #ece9e5;
+  --border: #e5e2dd;
+  --border-strong: #d3cfc9;
+  --text: #1a1917;
+  --muted: #57524c;
+  --faint: #6b655f;
 
-  --glass: rgba(255, 255, 255, 0.66);
-  --glass-border: rgba(109, 40, 217, 0.14);
-  --hover: rgba(109, 40, 217, 0.05);
-  --scrim: rgba(30, 20, 45, 0.45);
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: #d3cfc9;
+  --hover: rgba(26, 25, 23, 0.04);
+  --selected: rgba(26, 25, 23, 0.065);
+  --scrim: rgba(26, 25, 23, 0.28);
 
-  --shadow-card: 0 1px 2px rgba(80, 50, 120, 0.08);
-  --shadow-modal: 0 24px 60px rgba(80, 40, 120, 0.22);
+  --shadow-card: none;
+  --shadow-modal: 0 1px 0 rgba(0, 0, 0, 0.03), 0 16px 40px -12px rgba(0, 0, 0, 0.22);
 
-  --primary-text: #7d49f5;
-  --critical-text: #db1313;
-  --warning-text: #986206;
-  --success-text: #167f3d;
-  --info-text: #0769e2;
+  --primary: #1b5f8f;
+  --on-primary: #ffffff;
+  --critical: #b5372a;
+  --on-critical: #ffffff;
+  --warning: #93600e;
+  --success: #1d7a4e;
+  --info: #1b5f8f;
+
+  --primary-text: #1b5f8f;
+  --critical-text: #b5372a;
+  --warning-text: #93600e;
+  --success-text: #1d7a4e;
+  --info-text: #1b5f8f;
 }
 
 :root {
-  /* Fills, icons and borders — identical in both themes. Never use these for
-   * body text; use the --*-text variants above. */
-  --primary: #8b5cf6;
-  --lilac: #c4b5fd;
-  --deep: #6d28d9;
-  --critical: #ef4444;
-  --warning: #f59e0b;
-  --success: #22c55e;
-  --info: #60a5fa;
+  /* Kept for older call sites; both now resolve to the accent. */
+  --lilac: var(--primary);
+  --deep: var(--primary);
 
   /* 4px spacing grid */
   --space-1: 4px;
@@ -83,17 +95,17 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  --radius-ctrl: 8px;
-  --radius-card: 12px;
-  --radius-modal: 16px;
+  --radius-ctrl: 6px;
+  --radius-card: 8px;
+  --radius-modal: 10px;
   --radius-pill: 9999px;
 
-  --dur-fast: 150ms;
-  --dur-base: 200ms;
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur-base: 160ms;
+  --ease: ease-out;
 
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 *,
@@ -114,8 +126,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -123,7 +135,6 @@ body {
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 ::selection {
@@ -170,6 +181,12 @@ body {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes su-pulse {
+  50% {
+    opacity: 0.5;
   }
 }
 

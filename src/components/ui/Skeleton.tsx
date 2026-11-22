@@ -13,9 +13,7 @@ export function Skeleton({ className, as = 'div' }: { className?: string; as?: '
       aria-hidden
       className={cn(
         as === 'span' && 'inline-block',
-        'rounded-ctrl bg-elevated',
-        'bg-[linear-gradient(90deg,var(--elevated)_25%,var(--border)_50%,var(--elevated)_75%)]',
-        'bg-[length:200%_100%] animate-shimmer',
+        'rounded bg-elevated-2 animate-pulse',
         className,
       )}
     />
